@@ -39,6 +39,15 @@ def get_staged_files():
     return [f for f in result.stdout.splitlines() if f]
 
 
+def get_all_tracked_files():
+    """Returns all files tracked by Git in the repository (used in CI)."""
+    result = subprocess.run(
+        ["git", "ls-files"],
+        capture_output=True, text=True
+    )
+    return [f for f in result.stdout.splitlines() if f]
+
+
 def get_staged_content(filepath):
     """Returns the staged content of a file (not the one on disk)."""
     result = subprocess.run(
@@ -78,10 +87,17 @@ def scan_for_entropy(content):
     return findings
 
 
-def scan_file(filepath, patterns):
+def scan_file(filepath, patterns, from_disk=False):
     if any(filepath.endswith(ext) for ext in IGNORED_EXTENSIONS):
         return []
-    content = get_staged_content(filepath)
+    if from_disk:
+        try:
+            with open(filepath, encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+        except (FileNotFoundError, IsADirectoryError):
+            return []
+    else:
+        content = get_staged_content(filepath)
     findings = scan_for_patterns(content, patterns)
     findings += scan_for_entropy(content)
     for f in findings:
@@ -91,11 +107,16 @@ def scan_file(filepath, patterns):
 
 def main():
     patterns = load_patterns()
-    staged_files = get_staged_files()
+
+    if "--all" in sys.argv:
+        files_to_scan = get_all_tracked_files()
+    else:
+        files_to_scan = get_staged_files()
 
     all_findings = []
-    for filepath in staged_files:
-        all_findings.extend(scan_file(filepath, patterns))
+    use_disk = "--all" in sys.argv
+    for filepath in files_to_scan:
+        all_findings.extend(scan_file(filepath, patterns, from_disk=use_disk))
 
     if all_findings:
         print("\nPotential secrets detected, commit blocked:\n")
@@ -106,7 +127,7 @@ def main():
         sys.exit(1)
     else:
         print("No secrets detected. Commit allowed.")
-        sys.exit(0)
+        sys.exit(0) 
 
 
 if __name__ == "__main__":
