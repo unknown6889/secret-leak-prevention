@@ -9,7 +9,7 @@ PATTERNS_FILE = Path(__file__).parent / "patterns.json"
 ENTROPY_THRESHOLD = 4.3
 MIN_STRING_LENGTH = 20
 
-# Extensions à ignorer (binaires, fichiers générés, etc.)
+# Extensions to skip (binaries, generated files, etc.)
 IGNORED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".lock", ".min.js", ".woff", ".woff2"}
 
 
@@ -20,7 +20,7 @@ def load_patterns():
 
 
 def shannon_entropy(data):
-    """Calcule l'entropie de Shannon d'une chaîne, en bits par caractère."""
+    """Computes the Shannon entropy of a string, in bits per character."""
     if not data:
         return 0.0
     entropy = 0.0
@@ -31,7 +31,7 @@ def shannon_entropy(data):
 
 
 def get_staged_files():
-    """Retourne la liste des fichiers actuellement stagés pour commit."""
+    """Returns the list of files currently staged for commit."""
     result = subprocess.run(
         ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
         capture_output=True, text=True
@@ -40,7 +40,7 @@ def get_staged_files():
 
 
 def get_staged_content(filepath):
-    """Retourne le contenu stagé (pas celui du disque) d'un fichier."""
+    """Returns the staged content of a file (not the one on disk)."""
     result = subprocess.run(
         ["git", "show", f":{filepath}"],
         capture_output=True, text=True
@@ -65,7 +65,6 @@ def scan_for_patterns(content, patterns):
 
 def scan_for_entropy(content):
     findings = []
-    candidates = re.findall(r"[A-Za-z0-9+/=_\-]{%d,}" % MIN_STRING_LENGTH, content)
     for line_num, line in enumerate(content.splitlines(), start=1):
         for candidate in re.findall(r"[A-Za-z0-9+/=_\-]{%d,}" % MIN_STRING_LENGTH, line):
             score = shannon_entropy(candidate)
@@ -99,14 +98,14 @@ def main():
         all_findings.extend(scan_file(filepath, patterns))
 
     if all_findings:
-        print("\nSecrets potentiels détectés, commit bloqué :\n")
+        print("\nPotential secrets detected, commit blocked:\n")
         for f in all_findings:
-            print(f"  [{f['type'].upper()}] {f['file']}:{f['line']} — {f['rule']} ({f['preview']})")
-        print(f"\n{len(all_findings)} détection(s). Corrige ou retire ces éléments avant de committer.")
-        print("Si c'est un faux positif, ajoute le fichier à une liste d'exclusion (à venir).\n")
+            print(f"  [{f['type'].upper()}] {f['file']}:{f['line']} ({f['rule']}, preview: {f['preview']})")
+        print(f"\n{len(all_findings)} finding(s). Fix or remove these before committing.")
+        print("If this is a false positive, add the file to an exclusion list (coming soon).\n")
         sys.exit(1)
     else:
-        print("Aucun secret détecté. Commit autorisé.")
+        print("No secrets detected. Commit allowed.")
         sys.exit(0)
 
 
