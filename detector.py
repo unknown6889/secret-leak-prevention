@@ -12,7 +12,6 @@ MIN_STRING_LENGTH = 20
 # Extensions to skip (binaries, generated files, etc.)
 IGNORED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".lock", ".min.js", ".woff", ".woff2"}
 
-
 def load_patterns():
     with open(PATTERNS_FILE) as f:
         raw = json.load(f)
@@ -52,7 +51,8 @@ def get_staged_content(filepath):
     """Returns the staged content of a file (not the one on disk)."""
     result = subprocess.run(
         ["git", "show", f":{filepath}"],
-        capture_output=True, text=True
+        capture_output=True, text=True,
+	encoding="utf-8", errors="ignore"
     )
     return result.stdout
 
