@@ -122,7 +122,7 @@ tests/
 
 ## Author
 
-**Oussama Dimoqrati**
+**d3m0s-null**
 Final-year cybersecurity engineering student @ CESI
 
 [GitHub](https://github.com/unknown6889)
