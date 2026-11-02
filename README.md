@@ -54,7 +54,7 @@ This installs the hook into `.git/hooks/pre-commit`. Git hooks are never version
 ## Try it
 
 ```bash
-echo 'aws_key = "AKIAIOSFODNN7EXAMPLE"' > test.py
+echo 'aws_key = "AKIA_REPLACE_WITH_FAKE_VALUE"' > test.py
 git add test.py
 git commit -m "test"
 ```
